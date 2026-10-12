@@ -55,6 +55,7 @@ namespace MozeMusicInstaller
         private Button btnNext;
         private Button btnCancel;
         private Label lblPoweredBy;
+        private Label lblPoweredBySub;
 
         // Step Panels
         private Panel pnlStep1; // Welcome & Purpose
@@ -171,42 +172,62 @@ namespace MozeMusicInstaller
             };
             pnlSidebar.Paint += Sidebar_Paint;
 
-            // Powered by MozeLabs Link at bottom of sidebar
+            // Powered by MozeLabs Link in sidebar
             lblPoweredBy = new Label
             {
-                Text = "Powered by MozeLabs",
-                ForeColor = ColTextMuted,
-                Font = new Font("Segoe UI", 9.5f, FontStyle.Regular),
+#if LANG_EN
+                Text = "Powered by MozeLabs ↗",
+#else
+                Text = "Mozelabs tarafından geliştirildi",
+#endif
+                ForeColor = ColAccent,
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
                 Cursor = Cursors.Hand,
                 AutoSize = false,
-                Size = new Size(200, 24),
-                Location = new Point(20, 526),
+                Size = new Size(210, 22),
+                Location = new Point(20, 416),
                 TextAlign = ContentAlignment.MiddleLeft
             };
-            lblPoweredBy.MouseEnter += (s, e) =>
+
+            lblPoweredBySub = new Label
             {
-                lblPoweredBy.ForeColor = ColAccent;
-                lblPoweredBy.Font = new Font("Segoe UI", 9.5f, FontStyle.Underline);
+#if LANG_EN
+                Text = "mozelabs.com/en",
+#else
+                Text = "Powered by MozeLabs ↗",
+#endif
+                ForeColor = ColTextMuted,
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Regular),
+                Cursor = Cursors.Hand,
+                AutoSize = false,
+                Size = new Size(210, 20),
+                Location = new Point(20, 438),
+                TextAlign = ContentAlignment.MiddleLeft
             };
-            lblPoweredBy.MouseLeave += (s, e) =>
-            {
-                lblPoweredBy.ForeColor = ColTextMuted;
-                lblPoweredBy.Font = new Font("Segoe UI", 9.5f, FontStyle.Regular);
-            };
-            lblPoweredBy.Click += (s, e) =>
+
+            Action openMozelabs = () =>
             {
                 try
                 {
 #if LANG_EN
-                    string url = "https://mozelabs.com/en";
+                    Process.Start(new ProcessStartInfo("https://mozelabs.com/en") { UseShellExecute = true });
 #else
-                    string url = "https://mozelabs.com/tr";
+                    Process.Start(new ProcessStartInfo("https://mozelabs.com/tr") { UseShellExecute = true });
 #endif
-                    Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
                 }
                 catch { }
             };
+
+            lblPoweredBy.MouseEnter += (s, e) => { lblPoweredBy.ForeColor = ColAccentHover; };
+            lblPoweredBy.MouseLeave += (s, e) => { lblPoweredBy.ForeColor = ColAccent; };
+            lblPoweredBy.Click += (s, e) => openMozelabs();
+
+            lblPoweredBySub.MouseEnter += (s, e) => { lblPoweredBySub.ForeColor = ColAccent; lblPoweredBySub.Font = new Font("Segoe UI", 8.5f, FontStyle.Underline); };
+            lblPoweredBySub.MouseLeave += (s, e) => { lblPoweredBySub.ForeColor = ColTextMuted; lblPoweredBySub.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular); };
+            lblPoweredBySub.Click += (s, e) => openMozelabs();
+
             pnlSidebar.Controls.Add(lblPoweredBy);
+            pnlSidebar.Controls.Add(lblPoweredBySub);
 
             this.Controls.Add(pnlSidebar);
 
@@ -247,6 +268,43 @@ namespace MozeMusicInstaller
             btnBack.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             btnBack.Click += (s, e) => { if (currentStep > 1) ShowStep(currentStep - 1); };
 
+            Label lblBottomMozelabs = new Label
+            {
+#if LANG_EN
+                Text = "Powered by MozeLabs • mozelabs.com/en",
+#else
+                Text = "Mozelabs tarafından geliştirildi • mozelabs.com/tr",
+#endif
+                ForeColor = ColTextMuted,
+                Font = new Font("Segoe UI", 9f, FontStyle.Regular),
+                Cursor = Cursors.Hand,
+                AutoSize = true,
+                Location = new Point(24, 23)
+            };
+            lblBottomMozelabs.MouseEnter += (s, e) =>
+            {
+                lblBottomMozelabs.ForeColor = ColAccent;
+                lblBottomMozelabs.Font = new Font("Segoe UI", 9f, FontStyle.Underline);
+            };
+            lblBottomMozelabs.MouseLeave += (s, e) =>
+            {
+                lblBottomMozelabs.ForeColor = ColTextMuted;
+                lblBottomMozelabs.Font = new Font("Segoe UI", 9f, FontStyle.Regular);
+            };
+            lblBottomMozelabs.Click += (s, e) =>
+            {
+                try
+                {
+#if LANG_EN
+                    Process.Start(new ProcessStartInfo("https://mozelabs.com/en") { UseShellExecute = true });
+#else
+                    Process.Start(new ProcessStartInfo("https://mozelabs.com/tr") { UseShellExecute = true });
+#endif
+                }
+                catch { }
+            };
+
+            pnlBottom.Controls.Add(lblBottomMozelabs);
             pnlBottom.Controls.Add(btnBack);
             pnlBottom.Controls.Add(btnNext);
             pnlBottom.Controls.Add(btnCancel);
@@ -1432,7 +1490,7 @@ Aşağıdaki onay kutusunu işaretleyerek Kullanıcı Sözleşmesini, Gizlilik P
             // Divider above Powered By
             using (Pen p = new Pen(ColCardBorder, 1))
             {
-                g.DrawLine(p, 20, 514, pnlSidebar.Width - 20, 514);
+                g.DrawLine(p, 20, 404, pnlSidebar.Width - 20, 404);
             }
         }
 
