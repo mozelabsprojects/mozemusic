@@ -54,8 +54,7 @@ namespace MozeMusicInstaller
         private Button btnBack;
         private Button btnNext;
         private Button btnCancel;
-        private Label lblPoweredBy;
-        private Label lblPoweredBySub;
+        private GlowBrandBadge glowBadge;
 
         // Step Panels
         private Panel pnlStep1; // Welcome & Purpose
@@ -172,62 +171,14 @@ namespace MozeMusicInstaller
             };
             pnlSidebar.Paint += Sidebar_Paint;
 
-            // Powered by MozeLabs Link in sidebar
-            lblPoweredBy = new Label
-            {
+            // Glow Brand Badge in sidebar (Single, elegant, pulsing red glow)
 #if LANG_EN
-                Text = "Powered by MozeLabs ↗",
+            glowBadge = new GlowBrandBadge("Powered by MozeLabs ↗", "https://mozelabs.com/en");
 #else
-                Text = "Mozelabs tarafından geliştirildi",
+            glowBadge = new GlowBrandBadge("Mozelabs tarafından geliştirildi ↗", "https://mozelabs.com/tr");
 #endif
-                ForeColor = ColAccent,
-                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                Cursor = Cursors.Hand,
-                AutoSize = false,
-                Size = new Size(210, 22),
-                Location = new Point(20, 416),
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-
-            lblPoweredBySub = new Label
-            {
-#if LANG_EN
-                Text = "mozelabs.com/en",
-#else
-                Text = "Powered by MozeLabs ↗",
-#endif
-                ForeColor = ColTextMuted,
-                Font = new Font("Segoe UI", 8.5f, FontStyle.Regular),
-                Cursor = Cursors.Hand,
-                AutoSize = false,
-                Size = new Size(210, 20),
-                Location = new Point(20, 438),
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-
-            Action openMozelabs = () =>
-            {
-                try
-                {
-#if LANG_EN
-                    Process.Start(new ProcessStartInfo("https://mozelabs.com/en") { UseShellExecute = true });
-#else
-                    Process.Start(new ProcessStartInfo("https://mozelabs.com/tr") { UseShellExecute = true });
-#endif
-                }
-                catch { }
-            };
-
-            lblPoweredBy.MouseEnter += (s, e) => { lblPoweredBy.ForeColor = ColAccentHover; };
-            lblPoweredBy.MouseLeave += (s, e) => { lblPoweredBy.ForeColor = ColAccent; };
-            lblPoweredBy.Click += (s, e) => openMozelabs();
-
-            lblPoweredBySub.MouseEnter += (s, e) => { lblPoweredBySub.ForeColor = ColAccent; lblPoweredBySub.Font = new Font("Segoe UI", 8.5f, FontStyle.Underline); };
-            lblPoweredBySub.MouseLeave += (s, e) => { lblPoweredBySub.ForeColor = ColTextMuted; lblPoweredBySub.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular); };
-            lblPoweredBySub.Click += (s, e) => openMozelabs();
-
-            pnlSidebar.Controls.Add(lblPoweredBy);
-            pnlSidebar.Controls.Add(lblPoweredBySub);
+            glowBadge.Location = new Point(18, 416);
+            pnlSidebar.Controls.Add(glowBadge);
 
             this.Controls.Add(pnlSidebar);
 
@@ -268,43 +219,6 @@ namespace MozeMusicInstaller
             btnBack.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             btnBack.Click += (s, e) => { if (currentStep > 1) ShowStep(currentStep - 1); };
 
-            Label lblBottomMozelabs = new Label
-            {
-#if LANG_EN
-                Text = "Powered by MozeLabs • mozelabs.com/en",
-#else
-                Text = "Mozelabs tarafından geliştirildi • mozelabs.com/tr",
-#endif
-                ForeColor = ColTextMuted,
-                Font = new Font("Segoe UI", 9f, FontStyle.Regular),
-                Cursor = Cursors.Hand,
-                AutoSize = true,
-                Location = new Point(24, 23)
-            };
-            lblBottomMozelabs.MouseEnter += (s, e) =>
-            {
-                lblBottomMozelabs.ForeColor = ColAccent;
-                lblBottomMozelabs.Font = new Font("Segoe UI", 9f, FontStyle.Underline);
-            };
-            lblBottomMozelabs.MouseLeave += (s, e) =>
-            {
-                lblBottomMozelabs.ForeColor = ColTextMuted;
-                lblBottomMozelabs.Font = new Font("Segoe UI", 9f, FontStyle.Regular);
-            };
-            lblBottomMozelabs.Click += (s, e) =>
-            {
-                try
-                {
-#if LANG_EN
-                    Process.Start(new ProcessStartInfo("https://mozelabs.com/en") { UseShellExecute = true });
-#else
-                    Process.Start(new ProcessStartInfo("https://mozelabs.com/tr") { UseShellExecute = true });
-#endif
-                }
-                catch { }
-            };
-
-            pnlBottom.Controls.Add(lblBottomMozelabs);
             pnlBottom.Controls.Add(btnBack);
             pnlBottom.Controls.Add(btnNext);
             pnlBottom.Controls.Add(btnCancel);
@@ -1583,6 +1497,138 @@ Aşağıdaki onay kutusunu işaretleyerek Kullanıcı Sözleşmesini, Gizlilik P
             {
                 g.DrawRectangle(p, 0, 0, this.Width - 1, this.Height - 1);
             }
+        }
+    }
+
+    public class GlowBrandBadge : Control
+    {
+        private System.Windows.Forms.Timer glowTimer;
+        private float angle = 0f;
+        private bool isHovered = false;
+        private readonly string linkUrl;
+        private readonly string displayText;
+
+        public GlowBrandBadge(string text, string url)
+        {
+            this.displayText = text;
+            this.linkUrl = url;
+            this.Size = new Size(204, 38);
+            this.Cursor = Cursors.Hand;
+            this.DoubleBuffered = true;
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
+
+            glowTimer = new System.Windows.Forms.Timer();
+            glowTimer.Interval = 33;
+            glowTimer.Tick += (s, e) =>
+            {
+                angle += 0.08f;
+                if (angle > 628f) angle = 0f;
+                this.Invalidate();
+            };
+            glowTimer.Start();
+
+            this.MouseEnter += (s, e) => { isHovered = true; this.Invalidate(); };
+            this.MouseLeave += (s, e) => { isHovered = false; this.Invalidate(); };
+            this.Click += (s, e) =>
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo(linkUrl) { UseShellExecute = true });
+                }
+                catch { }
+            };
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && glowTimer != null)
+            {
+                glowTimer.Stop();
+                glowTimer.Dispose();
+                glowTimer = null;
+            }
+            base.Dispose(disposing);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
+            // Crimson / Ruby / Neon Red Color Flow
+            int r = (int)(235 + 20 * Math.Sin(angle));
+            int gCol = (int)(42 + 28 * Math.Sin(angle + 1.2));
+            int bCol = (int)(55 + 35 * Math.Cos(angle * 0.8));
+            r = Math.Max(0, Math.Min(255, r));
+            gCol = Math.Max(0, Math.Min(255, gCol));
+            bCol = Math.Max(0, Math.Min(255, bCol));
+            Color flowRed = Color.FromArgb(r, gCol, bCol);
+
+            Rectangle bounds = new Rectangle(3, 3, this.Width - 7, this.Height - 7);
+            int radius = 8;
+
+            // Outer Pulsing Red Glow Aura
+            int auraAlpha = isHovered ? 90 : 35 + (int)(22 * Math.Sin(angle * 2.0));
+            using (GraphicsPath glowPath = GetRoundedPath(new Rectangle(1, 1, this.Width - 3, this.Height - 3), radius + 2))
+            using (Pen glowPen = new Pen(Color.FromArgb(Math.Max(10, Math.Min(255, auraAlpha)), flowRed), 3f))
+            {
+                g.DrawPath(glowPen, glowPath);
+            }
+
+            // Glassy dark badge background
+            Color bgCol = isHovered 
+                ? Color.FromArgb(48, 22, 28) 
+                : Color.FromArgb(28, 20, 24);
+            using (GraphicsPath bgPath = GetRoundedPath(bounds, radius))
+            using (SolidBrush bgBrush = new SolidBrush(bgCol))
+            {
+                g.FillPath(bgBrush, bgPath);
+            }
+
+            // Glowing border stroke
+            using (GraphicsPath borderPath = GetRoundedPath(bounds, radius))
+            using (Pen borderPen = new Pen(flowRed, isHovered ? 1.8f : 1.2f))
+            {
+                g.DrawPath(borderPen, borderPath);
+            }
+
+            // Glowing live dot indicator on the left
+            int dotX = 14;
+            int dotY = (this.Height / 2) - 4;
+            using (SolidBrush dotGlow = new SolidBrush(Color.FromArgb(isHovered ? 210 : 130, flowRed)))
+            {
+                g.FillEllipse(dotGlow, dotX - 2, dotY - 2, 12, 12);
+            }
+            using (SolidBrush dotBrush = new SolidBrush(Color.White))
+            {
+                g.FillEllipse(dotBrush, dotX, dotY, 8, 8);
+            }
+
+            // Glowing Text
+            using (Font font = new Font("Segoe UI", 9.2f, FontStyle.Bold))
+            using (SolidBrush textBrush = new SolidBrush(isHovered ? Color.White : flowRed))
+            {
+                StringFormat sf = new StringFormat
+                {
+                    Alignment = StringAlignment.Near,
+                    LineAlignment = StringAlignment.Center
+                };
+                Rectangle textRect = new Rectangle(28, 0, this.Width - 32, this.Height);
+                g.DrawString(displayText, font, textBrush, textRect, sf);
+            }
+        }
+
+        private GraphicsPath GetRoundedPath(Rectangle rect, int radius)
+        {
+            GraphicsPath path = new GraphicsPath();
+            int diameter = radius * 2;
+            path.AddArc(rect.X, rect.Y, diameter, diameter, 180, 90);
+            path.AddArc(rect.Right - diameter, rect.Y, diameter, diameter, 270, 90);
+            path.AddArc(rect.Right - diameter, rect.Bottom - diameter, diameter, diameter, 0, 90);
+            path.AddArc(rect.X, rect.Bottom - diameter, diameter, diameter, 90, 90);
+            path.CloseFigure();
+            return path;
         }
     }
 }
