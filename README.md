@@ -63,7 +63,7 @@ MozeMusic, çift kanallı otomatik güncelleme altyapısına sahiptir:
    * GitHub Actions arka planda devreye girer, Android APK ve Windows sürümlerini derleyip Releases sayfasına yükler.
    * MozeMusic uygulaması otomatik olarak yeni sürümü algılar ve kullanıcıların telefonuna/bilgisayarına güncelleme pop-up'ı gönderir.
 2. **Yönetici Paneli (Admin Only):**
-   * Yalnızca yetkili yönetici hesapları (`mox17012000@gmail.com`) Ayarlar menüsünden **"Yeni Güncelleme Yayınla"** butonunu görebilir.
+   * Yalnızca yetkili yönetici hesapları ayarlar menüsünden **"Yeni Güncelleme Yayınla"** butonunu görebilir.
    * Buradan yayınlanan acil güncellemeler Firestore üzerinden tüm aktif kullanıcılara canlı olarak iletilir.
 
 ---
