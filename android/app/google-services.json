@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "564307519823",
+    "project_id": "mozemusic",
+    "storage_bucket": "mozemusic.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:564307519823:android:b016a37bc053f86127fd3a",
+        "android_client_info": {
+          "package_name": "com.example.mozemusic"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6V8p25AGBXHnqsPe10rrUTt8rL9vwhww"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

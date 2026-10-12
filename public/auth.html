@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MozeMusic - Google ile Giriş Yap</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Firebase App & Auth & Firestore Compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    body {
+      background: #0D0D0D;
+      color: #FFFFFF;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-x: hidden;
+      position: relative;
+    }
+    .bg-glow {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(230, 57, 70, 0.22) 0%, rgba(0, 0, 0, 0) 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      pointer-events: none;
+    }
+    .card {
+      position: relative;
+      z-index: 1;
+      background: rgba(24, 24, 24, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 28px;
+      padding: 44px 36px;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+    }
+    .logo-badge {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #E63946, #9B111E);
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 25px rgba(230, 57, 70, 0.35);
+    }
+    .logo-badge svg {
+      width: 38px;
+      height: 38px;
+      fill: #FFFFFF;
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 10px;
+    }
+    p.subtitle {
+      color: #A0A0A0;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+    .code-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 8px 16px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      color: #E0E0E0;
+    }
+    .code-pill strong {
+      color: #1DB954;
+      letter-spacing: 2px;
+      font-size: 15px;
+    }
+    .btn-google {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: #FFFFFF;
+      color: #121212;
+      border: none;
+      padding: 16px 24px;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+    .btn-google:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(255, 255, 255, 0.2);
+      background: #F5F5F5;
+    }
+    .btn-google:active {
+      transform: translateY(0);
+    }
+    .status-box {
+      display: none;
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .status-success {
+      background: rgba(29, 185, 84, 0.15);
+      border: 1px solid rgba(29, 185, 84, 0.4);
+      color: #1DB954;
+    }
+    .status-error {
+      background: rgba(230, 57, 70, 0.15);
+      border: 1px solid rgba(230, 57, 70, 0.4);
+      color: #FF6B6B;
+    }
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #121212;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="card">
+    <div class="logo-badge">
+      <!-- Music Note Icon -->
+      <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+    </div>
+    <h1>MozeMusic Masaüstü</h1>
+    <p class="subtitle">Google hesabınızla oturum açarak masaüstü uygulamanıza bağlanın.</p>
+
+    <div class="code-pill" id="codePill" style="display: none;">
+      <span>Oturum Kodu:</span>
+      <strong id="sessionCodeText">...</strong>
+    </div>
+
+    <button class="btn-google" id="loginBtn" onclick="handleGoogleSignIn()">
+      <!-- Google 'G' Logo SVG -->
+      <svg width="20" height="20" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+      </svg>
+      <span id="btnText">Google ile Giriş Yap</span>
+    </button>
+
+    <div class="status-box" id="statusBox"></div>
+  </div>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAJvFF7xWGYLAmyv2fRtUib7HZTxD0k8EY",
+      authDomain: "mozemusic.firebaseapp.com",
+      projectId: "mozemusic",
+      storageBucket: "mozemusic.firebasestorage.app",
+      messagingSenderId: "564307519823",
+      appId: "1:564307519823:web:95c0f4bedab037aa27fd3a"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionCode = urlParams.get('session') || urlParams.get('code');
+
+    if (sessionCode) {
+      document.getElementById('codePill').style.display = 'inline-flex';
+      document.getElementById('sessionCodeText').textContent = sessionCode;
+    }
+
+    async function saveSessionAndNotify(result, user) {
+      const googleIdToken = (result && result.credential) ? result.credential.idToken : null;
+      const googleAccessToken = (result && result.credential) ? result.credential.accessToken : null;
+      let firebaseIdToken = null;
+      try {
+        firebaseIdToken = await user.getIdToken(true);
+      } catch (_) {}
+
+      await db.collection('device_pair_sessions').doc(sessionCode).set({
+        code: sessionCode,
+        status: 'approved',
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || (user.email ? user.email.split('@')[0] : 'User'),
+        photoUrl: user.photoURL,
+        googleIdToken: googleIdToken,
+        googleAccessToken: googleAccessToken,
+        firebaseIdToken: firebaseIdToken,
+        idToken: googleIdToken || firebaseIdToken,
+        accessToken: googleAccessToken,
+        approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      const btn = document.getElementById('loginBtn');
+      if (btn) btn.style.display = 'none';
+      showStatus('success', '🎉 <strong>Giriş Başarılı!</strong><br><br>Masaüstü MozeMusic uygulaması Google hesabınızla açılıyor. Bu pencereyi kapatabilirsiniz.');
+
+      setTimeout(() => {
+        window.close();
+      }, 3000);
+    }
+
+    // Check redirect result on page load
+    window.addEventListener('load', async () => {
+      try {
+        const result = await auth.getRedirectResult();
+        if (result && result.user && sessionCode) {
+          await saveSessionAndNotify(result, result.user);
+        }
+      } catch (e) {
+        console.error('Redirect result error:', e);
+      }
+    });
+
+    async function handleGoogleSignIn() {
+      if (!sessionCode) {
+        showStatus('error', 'Hata: Oturum kodu bulunamadı. Lütfen masaüstü uygulamasından tekrar deneyin.');
+        return;
+      }
+
+      const btn = document.getElementById('loginBtn');
+      const btnText = document.getElementById('btnText');
+      btn.disabled = true;
+      btnText.innerHTML = '<span class="spinner"></span> Giriş yapılıyor...';
+
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.addScope('email');
+      provider.addScope('profile');
+
+      try {
+        const result = await auth.signInWithPopup(provider);
+        await saveSessionAndNotify(result, result.user);
+      } catch (error) {
+        console.error('Google Sign In Error:', error);
+        // If popup was blocked by browser, fallback to redirect flow
+        if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
+          showStatus('success', 'Tarayıcı penceresi yönlendiriliyor, lütfen bekleyin...');
+          auth.signInWithRedirect(provider);
+          return;
+        }
+        btn.disabled = false;
+        btnText.textContent = 'Google ile Giriş Yap';
+        showStatus('error', 'Giriş sırasında hata: ' + (error.message || error));
+      }
+    }
+
+    function showStatus(type, html) {
+      const box = document.getElementById('statusBox');
+      box.className = 'status-box status-' + type;
+      box.innerHTML = html;
+      box.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

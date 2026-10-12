@@ -1,0 +1,56 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Tüm kullanıcılara varsayılan olarak erişimi kapat.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Kullanıcıların sadece kendi dokümanlarını okuyup yazabilmesi.
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      // Followers koleksiyonu
+      match /followers/{followerId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == followerId;
+      }
+      
+      // Following koleksiyonu
+      match /following/{followingId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Playlists koleksiyonu: Sadece sahibi veya liste public ise okunabilir.
+      match /playlists/{playlistId} {
+        allow read: if request.auth != null && (request.auth.uid == userId || resource.data.isPublic == true);
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Liked Songs koleksiyonu: Sadece sahibi okuyup yazabilir.
+      match /liked_songs/{songId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Aktif Cihaz Oynatma Senkronizasyonu (Spotify Connect)
+      match /active_playback/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Cihaz Eşleştirme (QR Kod ile Masaüstü Girişi)
+    match /device_pair_sessions/{sessionId} {
+      allow read, write: if true;
+    }
+
+    // Jam Rooms: Herhangi bir giriş yapmış kullanıcı oda oluşturabilir, okuyabilir, katılabilir.
+    match /jam_rooms/{roomId} {
+      allow read, create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.hostId;
+    }
+  }
+}
+

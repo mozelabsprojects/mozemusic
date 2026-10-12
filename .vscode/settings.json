@@ -1,0 +1,19 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "/firebase.json"
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "flutter": {
+            "type": "object",
+            "description": "FlutterFire CLI configuration."
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  ]
+}
