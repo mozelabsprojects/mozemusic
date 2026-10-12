@@ -17,6 +17,10 @@ class SettingsScreen extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final settingsNotifier = ref.read(settingsProvider.notifier);
     final loc = ref.watch(locProvider);
+    final currentUserEmail = ref.watch(authStateProvider).value?.email?.toLowerCase() ?? '';
+    final isAdmin = currentUserEmail == 'mox17012000@gmail.com' ||
+        currentUserEmail == 'cosmoxbusiness@gmail.com' ||
+        currentUserEmail.contains('mozelabs');
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -221,15 +225,16 @@ class SettingsScreen extends ConsumerWidget {
                 }
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.rocket_launch_rounded, color: AppTheme.neonPurple),
-              title: Text('Yeni Güncelleme Yayınla (Admin)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.bold)),
-              subtitle: const Text('Tüm kullanıcılara canlı güncelleme bildirimi at', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-              trailing: const Icon(Icons.chevron_right, color: AppTheme.neonPurple),
-              onTap: () {
-                AdminPublishUpdateSheet.show(context);
-              },
-            ),
+            if (isAdmin)
+              ListTile(
+                leading: const Icon(Icons.rocket_launch_rounded, color: AppTheme.neonPurple),
+                title: Text('Yeni Güncelleme Yayınla (Admin)', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color, fontWeight: FontWeight.bold)),
+                subtitle: const Text('Tüm kullanıcılara canlı güncelleme bildirimi at', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                trailing: const Icon(Icons.chevron_right, color: AppTheme.neonPurple),
+                onTap: () {
+                  AdminPublishUpdateSheet.show(context);
+                },
+              ),
 
             const SizedBox(height: 24),
             Padding(

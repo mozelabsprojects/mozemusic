@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/app_update_info.dart';
@@ -20,8 +21,8 @@ class UpdateService {
   /// Compares semantic versions (e.g. 1.0.1 > 1.0.0)
   static bool isNewerVersion(String current, String remote) {
     try {
-      final currParts = current.split('+').first.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-      final remParts = remote.split('+').first.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+      final currParts = current.split('+').first.replaceAll('v', '').split('.').map((e) => int.tryParse(e) ?? 0).toList();
+      final remParts = remote.split('+').first.replaceAll('v', '').split('.').map((e) => int.tryParse(e) ?? 0).toList();
       for (int i = 0; i < 3; i++) {
         final c = i < currParts.length ? currParts[i] : 0;
         final r = i < remParts.length ? remParts[i] : 0;
@@ -34,7 +35,7 @@ class UpdateService {
     }
   }
 
-  /// Live stream for real-time update push notification
+  /// Live stream for real-time update push notification from Firestore
   Stream<AppUpdateInfo?> watchUpdateInfo() {
     return _firestore
         .collection('app_config')
@@ -46,15 +47,60 @@ class UpdateService {
     });
   }
 
-  /// One-time fetch for manual update check
+  /// Fetch update checking both Firestore and GitHub Releases
   Future<AppUpdateInfo?> fetchUpdateInfo() async {
+    // 1. Try Firestore first
     try {
       final doc = await _firestore.collection('app_config').doc('version').get();
-      if (!doc.exists || doc.data() == null) return null;
-      return AppUpdateInfo.fromMap(doc.data()!);
-    } catch (e) {
-      return null;
-    }
+      if (doc.exists && doc.data() != null) {
+        final info = AppUpdateInfo.fromMap(doc.data()!);
+        if (isNewerVersion(currentVersion, info.latestVersion)) {
+          return info;
+        }
+      }
+    } catch (_) {}
+
+    // 2. Check GitHub Releases API (automatic OTA updates when pushing to GitHub)
+    return await fetchGitHubRelease();
+  }
+
+  /// Automatic GitHub Releases integration
+  Future<AppUpdateInfo?> fetchGitHubRelease() async {
+    try {
+      final dio = Dio();
+      final res = await dio.get(
+        'https://api.github.com/repos/mozelabsprojects/mozemusic/releases/latest',
+        options: Options(responseType: ResponseType.json),
+      );
+      if (res.statusCode == 200 && res.data is Map) {
+        final data = res.data as Map;
+        final tagName = data['tag_name']?.toString().replaceAll('v', '') ?? '';
+        final body = data['body']?.toString() ?? '';
+        final assets = (data['assets'] as List?) ?? [];
+
+        String winUrl = 'https://github.com/mozelabsprojects/mozemusic/releases/latest/download/MozeMusic_Setup.exe';
+        String apkUrl = 'https://github.com/mozelabsprojects/mozemusic/releases/latest/download/app-release.apk';
+
+        for (final asset in assets) {
+          final name = asset['name']?.toString().toLowerCase() ?? '';
+          final downloadUrl = asset['browser_download_url']?.toString() ?? '';
+          if (name.endsWith('.exe')) winUrl = downloadUrl;
+          if (name.endsWith('.apk')) apkUrl = downloadUrl;
+        }
+
+        return AppUpdateInfo(
+          latestVersion: tagName,
+          minRequiredVersion: '1.0.0',
+          forceUpdate: false,
+          title: 'MozeMusic v$tagName Yayında! 🚀',
+          releaseNotes: body.isNotEmpty ? body : 'GitHub üzerinden yeni sürüm yayınlandı.',
+          downloadUrlWindows: winUrl,
+          downloadUrlAndroid: apkUrl,
+          releaseDate: data['published_at']?.toString().split('T').first ?? '',
+        );
+      }
+    } catch (_) {}
+    return null;
   }
 
   /// Admin method: broadcast new update to all devices instantly
