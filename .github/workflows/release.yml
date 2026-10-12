@@ -66,16 +66,22 @@ jobs:
       - name: Build Windows Release
         run: flutter build windows --release
 
-      - name: Compress Windows Build
+      - name: Build Windows Installers
         shell: pwsh
         run: |
-          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath MozeMusic-Windows-Portable.zip
+          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath installer_src\payload.zip -Force
+          $csc = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+          & $csc /target:winexe /optimize+ /reference:System.IO.Compression.FileSystem.dll /reference:System.IO.Compression.dll /win32icon:windows\runner\resources\app_icon.ico /resource:installer_src\payload.zip,MozeMusicPayload /out:MozeMusic_Kurulum_Sihirbazi.exe installer_src\Program.cs
+          & $csc /target:winexe /optimize+ /define:LANG_EN /reference:System.IO.Compression.FileSystem.dll /reference:System.IO.Compression.dll /win32icon:windows\runner\resources\app_icon.ico /resource:installer_src\payload.zip,MozeMusicPayload /out:MozeMusic_Setup.exe installer_src\Program.cs
+          Remove-Item installer_src\payload.zip -Force
 
-      - name: Upload Windows Artifact
+      - name: Upload Windows Installers Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mozemusic-windows
-          path: MozeMusic-Windows-Portable.zip
+          name: mozemusic-windows-installers
+          path: |
+            MozeMusic_Kurulum_Sihirbazi.exe
+            MozeMusic_Setup.exe
 
   create-release:
     name: Publish GitHub Release
@@ -93,14 +99,15 @@ jobs:
       - name: Download Windows Artifact
         uses: actions/download-artifact@v4
         with:
-          name: mozemusic-windows
+          name: mozemusic-windows-installers
 
       - name: Create Release & Upload Assets
         uses: softprops/action-gh-release@v1
         with:
           files: |
             MozeMusic-Android.apk
-            MozeMusic-Windows-Portable.zip
+            MozeMusic_Kurulum_Sihirbazi.exe
+            MozeMusic_Setup.exe
           draft: false
           prerelease: false
           generate_release_notes: true
